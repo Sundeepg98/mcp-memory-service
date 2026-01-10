@@ -736,6 +736,11 @@ SOLUTIONS:
             # Check if we should use ONNX
             use_onnx = os.environ.get('MCP_MEMORY_USE_ONNX', '').lower() in ('1', 'true', 'yes')
 
+            # Auto-enable ONNX if sentence_transformers not available (lite install)
+            if not use_onnx and not SENTENCE_TRANSFORMERS_AVAILABLE:
+                logger.info("sentence_transformers not available, auto-enabling ONNX embeddings")
+                use_onnx = True
+
             if use_onnx:
                 # Try to use ONNX embeddings
                 logger.info("Attempting to use ONNX embeddings (PyTorch-free)")
