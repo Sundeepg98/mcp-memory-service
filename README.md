@@ -1,11 +1,39 @@
-# MCP Memory Service
+# MCP Memory Service - Lite Distribution
+
+> **This is the lightweight fork** - ONNX-only, no PyTorch (~388 MB vs ~881 MB)
+>
+> For the full version with PyTorch: [doobidoo/mcp-memory-service](https://github.com/doobidoo/mcp-memory-service)
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![PyPI version](https://img.shields.io/pypi/v/mcp-memory-service?color=blue&logo=pypi&logoColor=white)](https://pypi.org/project/mcp-memory-service/)
-[![Python](https://img.shields.io/pypi/pyversions/mcp-memory-service?logo=python&logoColor=white)](https://pypi.org/project/mcp-memory-service/)
-[![GitHub stars](https://img.shields.io/github/stars/doobidoo/mcp-memory-service?style=social)](https://github.com/doobidoo/mcp-memory-service/stargazers)
+[![Lite Version](https://img.shields.io/badge/Version-Lite%20(ONNX)-green)](https://github.com/Sundeepg98/mcp-memory-service)
+[![Install Size](https://img.shields.io/badge/Size-~388%20MB-brightgreen)](https://github.com/Sundeepg98/mcp-memory-service)
 [![Works with Claude](https://img.shields.io/badge/Works%20with-Claude-blue)](https://claude.ai)
-[![Works with Cursor](https://img.shields.io/badge/Works%20with-Cursor-orange)](https://cursor.sh)
+
+## Quick Install (Lite)
+
+```bash
+# With pip
+pip install "git+https://github.com/Sundeepg98/mcp-memory-service"
+
+# With pipx (recommended)
+pipx install "git+https://github.com/Sundeepg98/mcp-memory-service"
+
+# With uv
+uv tool install "git+https://github.com/Sundeepg98/mcp-memory-service"
+```
+
+### Lite vs Full Comparison
+
+| Aspect | This Fork (Lite) | Upstream (Full) |
+|--------|------------------|-----------------|
+| Install size | ~388 MB | ~881 MB |
+| PyTorch | No | Yes (437 MB) |
+| Transformers | No | Yes (56 MB) |
+| ONNX Runtime | Yes | Yes |
+| Embeddings | ONNX | PyTorch or ONNX |
+| Quality Scoring | ONNX | PyTorch or ONNX |
+
+---
 
 ## Stop Re-Explaining Your Project to AI Every Session
 
