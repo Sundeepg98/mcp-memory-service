@@ -10,6 +10,123 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [8.76.0] - 2026-01-12
+
+### Added
+- **Official Lite Distribution Support** (PR #341)
+  - **New Package**: `mcp-memory-service-lite` - Official lightweight distribution for ONNX-only installations
+    - 90% installation size reduction: 7.7GB → 805MB
+    - Same nvidia-quality-classifier-deberta ONNX model, just lighter dependency chain
+    - Faster installation time: <2 minutes vs 10-15 minutes
+  - **Dual Package Publishing**: Automated CI/CD workflow (`publish-dual.yml`) publishes both packages to PyPI
+    - Full package: `mcp-memory-service` (includes transformers, torch, sentence-transformers)
+    - Lite package: `mcp-memory-service-lite` (ONNX-only, tokenizers-based embeddings)
+    - Both packages share the same codebase via pyproject-lite.toml
+  - **Conditional Dependency Loading**: Transformers becomes truly optional
+    - Quality scoring works with tokenizers-only (lite) or full transformers (full package)
+    - Graceful fallback: embedding service detects available packages and loads accordingly
+    - No runtime performance impact - same quality scoring performance
+  - **Implementation Details**:
+    - Created `pyproject-lite.toml` with minimal dependencies (no transformers/torch)
+    - Updated `onnx_ranker.py` to use tokenizers directly instead of transformers
+    - Fixed quality_provider metadata access bug in async_scorer.py
+    - 15 comprehensive integration tests (`tests/test_lightweight_onnx.py`, 487 lines)
+  - **Documentation**:
+    - Complete setup guide: `docs/LIGHTWEIGHT_ONNX_SETUP.md`
+    - Setup script: `scripts/setup-lightweight.sh`
+  - **Use Cases**:
+    - CI/CD pipelines (faster builds, lower disk usage)
+    - Resource-constrained environments (VPS, containers)
+    - Quick local development setup
+    - Users who only need quality scoring (not full ML features)
+- **Production Refactor Command**: Added `/refactor-function-prod` command for production-ready code refactoring
+  - Enhanced version of the refactor-function PoC with production features
+- **Refactoring Metrics Documentation**: Comprehensive Issue #340 refactoring documentation in `.metrics/`
+  - Baseline complexity measurements
+  - Complexity comparison showing 75.2% average reduction
+  - Tracking tables and completion reports
+
+### Fixed
+- **Multi-Protocol Port Detection and Cross-Platform Fallback** (`scripts/service/http_server_manager.sh`)
+  - **Problem**: Update script failed with port conflict on Linux systems without lsof installed
+  - **Root Causes**:
+    - Script used lsof exclusively for port detection, silently failed on systems without it (common on Arch/Manjaro)
+    - Health checks only tried HTTP protocol, failed when server used HTTPS
+    - Led to "server not running" false positive → attempted restart → port conflict error
+  - **Solution**:
+    - Implemented 4-level port detection fallback chain: lsof → ss → netstat → ps
+    - Health check now tries both HTTP and HTTPS protocols with automatic fallback
+    - Explicit error messages when all detection methods fail
+    - Cross-platform compatibility validated on Arch Linux with ss-only environment
+  - **Testing**: Manual testing on Arch Linux without lsof, confirmed fallback to ss works correctly
+  - **Impact**: Resolves installation failures on minimal Linux distributions, improves HTTPS deployment reliability
+- **MCP HTTP Transport**: Fix KeyError 'backend_info' in get_cache_stats tool (Issue #342, PR #343)
+  - **Problem**: `get_cache_stats` tool crashed with `KeyError: 'backend_info'` when called via HTTP transport
+  - **Root Cause**: Code tried to set `result["backend_info"]["embedding_model"]` without creating the dict first
+  - **Solution**: Create complete `backend_info` dict with all required fields (storage_backend, sqlite_path, embedding_model)
+  - **Impact**: HIGH severity (tool completely broken in HTTP transport), LOW risk fix
+  - **Testing**: Added regression test validating backend_info structure
+  - Thanks to @Sundeepg98 for reporting with clear reproduction steps!
+- **Hook Installer**: Auto-register PreToolUse hook in settings.json (Issue #335)
+  - **Problem**: `permission-request.js` was copied but never registered in `settings.json`, so the hook never executed
+  - **Solution**: Installer now auto-adds PreToolUse hook configuration for MCP permission management
+  - Added 7 new safe patterns: `store`, `remember`, `ingest`, `rate`, `proactive`, `context`, `summary`, `recommendations`
+  - Hook now correctly auto-approves additive operations (e.g., `store_memory`)
+- **Memory Hooks**: Fix cluster memory categorization showing incorrect dates
+  - **Problem**: Consolidated cluster memories (from consolidation system) showed "🕒 today" in "Recent Work" section because hook used `created_at` (when cluster was created) instead of `temporal_span` (time period the cluster represents)
+  - **Solution**: Added new "📦 Consolidated Memories" section with proper temporal span display (e.g., "📅 180d span")
+  - **Changes**: Updated `claude-hooks/utilities/context-formatter.js` to detect `compressed_cluster` memory type and display `metadata.temporal_span.span_days`
+  - **Impact**: Prevents confusion between recent development and historical memory summaries
+
+### Changed
+- **Hook Installer**: Refactored MCP configuration detection functions for improved maintainability (Issue #340)
+  - Reduced complexity by 45.5% across 3 core functions
+  - Extracted 6 well-structured helper functions (avg complexity 3.83)
+  - Fixed validation bug: Added 'detected' server type support (PR #339 follow-up)
+  - Improved code grade distribution: 58% A-grade functions (up from 53%)
+- **Memory Consolidation**: Improved cluster concept quality with intelligent deduplication
+  - **Problem**: Cluster summaries showed redundant concepts (e.g., "memories, Memories, MEMORY, memory") and noise (SQL keywords like "BETWEEN")
+  - **Solution**: Added case-insensitive deduplication and filtering of SQL keywords/meta-concepts
+  - **Changes**: Enhanced `_extract_key_concepts()` in `consolidation/compression.py` to deduplicate case variants and filter 10 SQL keywords + 6 meta-concepts
+  - **Impact**: Cluster summaries now show meaningful thematic concepts instead of technical noise
+
+## [8.75.1] - 2026-01-10
+
+### Fixed
+- **Hook Installer**: Support flexible MCP server naming conventions (PR #339)
+  - **Problem**: Installer required exact server name `memory`, causing installation failures for users with custom MCP configurations (e.g., `mcp-memory-service`, `memory-service`)
+  - **Solution**:
+    - Installer now detects servers matching patterns: `memory`, `mcp-memory`, `*memory*service*`, `*memory*server*`
+    - Backward compatible with existing `memory` server name
+    - Provides clear error messages when no matching server found
+    - Improved user experience for custom MCP configurations
+  - **Testing**: Manual testing with various server name configurations
+  - **Contributors**: Thanks to @timkjr for reporting and testing the fix!
+
+## [8.75.0] - 2026-01-09
+
+### Added
+- **Lightweight ONNX Quality Scoring without Transformers Dependency** (PR #337)
+  - **Problem**: transformers package adds 6.9GB of dependencies (torch, tensorflow, etc.), making installation bloated for users who only need quality scoring
+  - **Solution**: Use tokenizers package directly instead of transformers
+    - 90% disk space reduction: 7.7GB → 805MB total installation
+    - Same ONNX model (nvidia-quality-classifier-deberta), just lighter dependency chain
+    - Conditional dependency loading - only install what you use
+  - **Implementation**:
+    - Modified `src/mcp_memory_service/quality/onnx_ranker.py` to use tokenizers directly
+    - Added tokenizers as optional dependency in pyproject.toml
+    - Updated embedding service to handle both tokenizers and transformers (graceful fallback)
+    - Fixed quality_provider metadata access bug in async_scorer.py
+  - **Testing**: 15 comprehensive integration tests (`tests/test_lightweight_onnx.py`, 487 lines)
+  - **Documentation**:
+    - Complete setup guide: `docs/LIGHTWEIGHT_ONNX_SETUP.md`
+    - Setup script: `scripts/setup-lightweight.sh`
+  - **Benefits**:
+    - Faster installation (<2 min vs 10-15 min)
+    - Lower disk usage (805MB vs 7.7GB)
+    - Same quality scoring performance
+    - No runtime performance impact
+
 ### Fixed
 - **Multi-Protocol and Cross-Platform Port Detection** (`scripts/service/http_server_manager.sh`)
   - **Problem**: Update script failed with port conflict on Linux systems without lsof installed

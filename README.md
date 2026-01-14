@@ -178,18 +178,19 @@ Export memories from mcp-memory-service → Import to shodh-cloudflare → Sync 
 ---
 
 
-## 🆕 Latest Release: **v8.74.0** (Jan 9, 2026)
+## 🆕 Latest Release: **v8.76.0** (Jan 12, 2026)
 
-**Cross-Platform Orphan Process Cleanup - Database Lock Prevention**
+**Official Lite Distribution - mcp-memory-service-lite Package**
 
-- 🧹 **Automatic Orphan Detection** - Identifies orphaned MCP memory processes after Claude Desktop/Code crashes
-- 🛡️ **Database Lock Prevention** - Eliminates "SQLite database is locked" errors from orphaned processes
-- 🌐 **Cross-Platform Wrappers** - Python, Bash (macOS/Linux), and PowerShell (Windows) implementations
-- 🔒 **Safe Cleanup** - Only terminates actual orphans (ppid == 1 on Unix, missing parent on Windows), preserves active sessions
-- 📚 **Comprehensive Documentation** - README_CLEANUP_WRAPPER.md with installation guide, troubleshooting, and technical details
-- 🔧 **22 Unit Tests** - Full test coverage with platform-specific validation
+- 📦 **New Lite Package** - Official `mcp-memory-service-lite` package for ONNX-only installations (90% size reduction: 7.7GB → 805MB)
+- 🤖 **Automated Dual Publishing** - CI/CD workflow publishes both full and lite packages to PyPI automatically
+- 🔌 **Conditional Loading** - Transformers dependency becomes truly optional, loaded only when needed
+- 🐛 **Multi-Protocol Port Detection** - Fixed HTTP/HTTPS health check issues with cross-platform fallback (lsof → ss → netstat → ps)
 
 **Previous Releases**:
+- **v8.75.1** - Hook Installer Fix (flexible MCP server naming support, custom configurations)
+- **v8.75.0** - Lightweight ONNX Quality Scoring (90% installation size reduction: 7.7GB → 805MB, same quality scoring performance)
+- **v8.74.0** - Cross-Platform Orphan Process Cleanup (database lock prevention, automatic orphan detection after crashes)
 - **v8.73.0** - Universal Permission Request Hook (auto-approves safe operations, eliminates repetitive prompts for 12+ tools)
 - **v8.72.0** - Graph Traversal MCP Tools (find_connected_memories, find_shortest_path, get_memory_subgraph - 5-25ms, 30x faster)
 - **v8.71.0** - Memory Management APIs and Graceful Shutdown (cache cleanup, process monitoring, production-ready memory management)
